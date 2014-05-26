@@ -188,8 +188,6 @@
      * GATHER UP FILES
      */
 
-    console.log();
-
     var options = COMMAND_LINE_OPTIONS.parse( OPTIONS_SETUP, process.argv );
     var params = options.params;
     var hasError = false;
@@ -202,8 +200,10 @@
     }
 
     if ( params.help ) { 
+        console.log();
         console.log( HELP_MESSAGE );
     } else if ( params.version ) {
+        console.log();
         console.log( VERSION_MESSAGE );
     }
 
