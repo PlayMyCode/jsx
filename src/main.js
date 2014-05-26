@@ -143,34 +143,37 @@
     var findFolderFiles = function( seenFiles, src, dest, recursive, log ) {
         log.debug();
         log.debug( 'searching ... ' + src );
+
         var files = FS.readdirSync( src );
 
-        for ( var j = 0; j < files.length; j++ ) {
-            var f     = src + '/' + files[j];
-            var stats = FS.lstatSync( f );
+        for ( var i = 0; i < files.length; i++ ) {
+            var fileName = files[i];
 
-            if ( f.charAt(0) !== '.' ) {
+            // skip hidden files, folders, . and ..
+            if ( fileName.charAt(0) !== '.' ) {
+                var file  = src + '/' + fileName;
+                var stats = FS.lstatSync( file );
 
                 // collect up all jsx and js files
                 if ( stats.isFile() ) {
                     if (
-                            IS_JS_REGEX.test(f) ||
-                            IS_JSX_REGEX.test(f)
+                            IS_JS_REGEX.test(fileName) ||
+                            IS_JSX_REGEX.test(fileName)
                     ) {
                         // only store files we have not yet seen
-                        var fPath = PATH.resolve( f );
+                        var filePath = PATH.resolve( file );
 
-                        if ( ! seenFiles.hasOwnProperty(fPath) ) {
-                            log.debug( '    found ' + fPath );
+                        if ( ! seenFiles.hasOwnProperty(filePath) ) {
+                            log.debug( '\tfound ' + filePath );
 
-                            seenFiles[ fPath ] = true;
-                            dest.push( fPath );
+                            seenFiles[ filePath ] = true;
+                            dest.push( filePath );
                         }
                     }
 
                 // or search for more files in a subfolder
                 } else if ( recursive && stats.isDirectory() ) {
-                    findFolderFiles( seenFiles, f, dest, recursive, log );
+                    findFolderFiles( seenFiles, file, dest, recursive, log );
 
                 }
             }
@@ -194,7 +197,7 @@
 
     if ( params.verbose ) {
         log.enableMode('debug');
-        log.debug( 'verbose logging is on!' );
+        log.debug( 'verbose logging is on' );
         log.debug();
     }
 
@@ -418,11 +421,11 @@
         log.debug( ":", file );
 
         if ( IS_JS_REGEX.test(file) ) {
-            log.debug( "\t", "concat as JS file" );
+            log.debug( "\tconcat as JS file" );
             code += FS.readFileSync( file, 'utf8' );
 
         } else if ( IS_JSX_REGEX.test(file) ) {
-            log.debug( "\t", "compile as JSX file" );
+            log.debug( "\tcompile as JSX file" );
             code += JSX.parse(
                     FS.readFileSync( file, 'utf8' )
             );
@@ -436,7 +439,8 @@
     log.debug();
     log.debug( 'write to output,', out );
     FS.writeFileSync( out, code );
-    log.debug( 'WE ARE FINISHED!' );
+    log.debug();
+    log.debug( '# # # FINISHED # # #' );
     log.debug();
 })()
 
