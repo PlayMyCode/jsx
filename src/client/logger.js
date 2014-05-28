@@ -177,8 +177,7 @@
 
     
     // exports
-    
-    exports.Logger = Logger;
+    global.Logger = Logger;
 
 })();
 

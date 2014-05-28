@@ -254,5 +254,7 @@
 
 
 
-    exports.parse = parseOptions;
+    global.CommandLineOptions = {
+        parse : parseOptions
+    }
 })();

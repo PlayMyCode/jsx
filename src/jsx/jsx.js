@@ -5,7 +5,7 @@
  *
  * Markdown mixed with JavaScript, like literte coffeescript.
  */
-exports.jsx = (function() {
+(function() {
     var jsx = function( code ) {
         return jsx.parse( code );
     }
@@ -84,16 +84,16 @@ exports.jsx = (function() {
                 );
     }
 
-    var parseInjectedVariables = function( injectedVariables ) {
+    var parseinjectedvariables = function( injectedvariables ) {
         var str = '';
 
-        for ( var k in injectedVariables ) {
-            if ( injectedVariables.hasOwnProperty(k) ) {
+        for ( var k in injectedvariables ) {
+            if ( injectedvariables.hasownproperty(k) ) {
                 str += 
                         "window['" +
                                 k.replace(/'/g, "\\'").replace(/\\/g, "\\\\") +
                         "'] = " + 
-                        injectedVariables[k] +
+                        injectedvariables[k] +
                         ";";
             }
         }
@@ -224,6 +224,7 @@ exports.jsx = (function() {
                      * so when we reach it, back up (with i--),
                      * and deal with the markdown on the next outer loop.
                      */
+                    // if the line has content, and does not start with 4 spaces ...
                     if ( 
                             l.trim().length > 0 &&
                             (
@@ -238,6 +239,7 @@ exports.jsx = (function() {
                         break;
                     }
 
+                    var lLen = l.length;
                     for ( var k = 0; k < l.length; k++ ) {
                         var c = l.charAt(k);
 
@@ -248,6 +250,17 @@ exports.jsx = (function() {
                                     l.charAt(k-1) !== '\\'
                             ) {
                                 inDoubleString = false;
+                            // support for multiline string
+                            } else if ( k === lLen-1 ) {
+                                l = l + '\\n" + ';
+
+                                // preserve the initial indentation across the following lines
+                                // we only preserve if we can ...
+                                lines[i+1] = (lines[i+1] || '').replace( /^    ( *)/, replaceIndentationWithOpenDoubleQuote );
+
+                                // close because we closed it manually on this line,
+                                // and it then opens again on the next line
+                                inDoubleString = false;
                             }
                         } else if ( inSingleString ) {
                             if (
@@ -255,6 +268,17 @@ exports.jsx = (function() {
                                     l.charAt(k-1) !== '\\'
                             ) {
                                 inSingleString = false;
+                            // support for multiline string
+                            } else if ( k === lLen-1 ) {
+                                l = l + '\\n" + ';
+
+                                // preserve the initial indentation across the following lines
+                                // we only preserve if we can ...
+                                lines[i+1] = (lines[i+1] || '').replace( /^    ( *)/, replaceIndentationWithOpenSingleQuote );
+
+                                // close because we closed it manually on this line,
+                                // and it then opens again on the next line
+                                inDoubleString = false;
                             }
                         } else if ( isDoubleComment ) {
                             if (
@@ -356,5 +380,11 @@ exports.jsx = (function() {
         return code.join( "\n" );
     }
 
-    return jsx;
+    if ( typeof window !== 'undefined' ) {
+        window.jsx = jsx;
+    } else if ( typeof global !== 'undefined' ) {
+        global.jsx = jsx;
+    } else {
+        throw new Error( "no idea where to put jsx into the global state" );
+    }
 })();
