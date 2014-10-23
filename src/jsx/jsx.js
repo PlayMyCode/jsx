@@ -10,56 +10,6 @@
         return jsx.parse( code );
     }
 
-    jsx.parseScripts = function() {
-        setTimeout( function() {
-            var scripts = document.getElementsByTagName( 'script' );
-            for ( var i = 0; i < scripts.length; i++ ) {
-                var src = scripts[i].getAttribute( 'src' );
-
-                if ( src && src.matches(/.*\.jsx(\?.*)?/) ) {
-                    jsx.parseUrl( scripts.src, function(err, code) {
-                        if ( err ) {
-                            throw err;
-                        } else {
-                            var script = document.createElement('script');
-                            script.innerHTML = code;
-                            document.head.appendChild( script );
-                        }
-                    } );
-                }
-            }
-        }, 0 );
-    }
-
-    jsx.parseUrl = function( url, callback ) {
-        try {
-            var ajaxObj = new window.XMLHttpRequest();
-
-            ajaxObj.onreadystatechange = function() {
-                if ( ajaxObj.readyState === 4 ) {
-                    var err    = undefined,
-                        status = ajaxObj.status;
-
-                    if ( ! (status >= 200 && status < 300 || status === 304) ) {                    
-                        err = new Error(
-                                "error connecting to url " +
-                                slate.util.htmlSafe(url) + ', ' + status
-                        );
-                        callback( err, null, url, ajaxObj );
-                    } else {
-                        var code = jsx.parse( ajaxObj.responseText );
-                        callback( null, url, ajaxObj );
-                    }
-                }
-            }
-
-            ajaxObj.open( type, url, true );
-            ajaxObj.send( '' );
-        } catch ( ex ) {
-            callback(ex, undefined);
-        }
-    };
-
     var isListTest = function( line ) {
         return (
                         (
@@ -84,22 +34,60 @@
                 );
     }
 
-    var parseinjectedvariables = function( injectedvariables ) {
+    var parseInjectedVariables = function( injectedVariables ) {
         var str = '';
 
-        for ( var k in injectedvariables ) {
-            if ( injectedvariables.hasownproperty(k) ) {
+        for ( var k in injectedVariables ) {
+            if ( injectedVariables.hasOwnProperty(k) ) {
                 str += 
                         "window['" +
                                 k.replace(/'/g, "\\'").replace(/\\/g, "\\\\") +
                         "'] = " + 
-                        injectedvariables[k] +
+                        injectedVariables[k] +
                         ";";
             }
         }
 
         return str;
     }
+
+    var replaceIndentationWithOpenDoubleQuote = function(match) {
+        var strLen = match.length;
+
+        if ( strLen === 4 ) {
+            return '    "';
+        } else if ( strLen > 4 ) {
+            // concat on all indentation spaces, but remove 1, which is replaced with a quote
+            // i.e. '     ' -> '    "'
+            var newStr = '';
+            for ( ; strLen > 2; strLen-- ) {
+                newStr += ' ';
+            }
+
+            return newStr + '"';
+        } else {
+            return match;
+        }
+    };
+
+    var replaceIndentationWithOpenSingleQuote = function(match) {
+        var strLen = match.length;
+
+        if ( strLen === 4 ) {
+            return "    '";
+        } else if ( strLen > 4 ) {
+            // concat on all indentation spaces, but remove 1, which is replaced with a quote
+            // i.e. '     ' -> '    "'
+            var newStr = '';
+            for ( ; strLen > 2; strLen-- ) {
+                newStr += ' ';
+            }
+
+            return newStr + "'";
+        } else {
+            return match;
+        }
+    };
 
     jsx.parse = function( code, injectedVariables ) {
         var injectedCode = '';
