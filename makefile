@@ -7,6 +7,10 @@
 # Use 'make help' for help.
 # 
 
+# installation info
+INSTALL_DIR=$(USERPROFILE)\.scripts\jsx
+INSTALL_RUN_BAT=$(USERPROFILE)\.scripts\jsx.bat
+
 # where are the sources
 JSX_BAT_SRC=.\src\jsx.bat
 JSX_SRC=.\src\jsx\jsx.js
@@ -15,7 +19,8 @@ CLIENT_SRC=.\src\client\main.js .\src\client\logger.js .\src\client\command-line
 
 # setup specific on how to build and delete jsx stuff
 COMPILER=node ./bin/jsx-client.js 
-DEL=del /Q 
+RM=del /Q 
+RMDIR=rmdir /S /Q 
 
 # 
 # Make Dependencies
@@ -23,47 +28,96 @@ DEL=del /Q
 
 .PHONY: clean install
 
+# 
+# 		Help
+#
+# Note the use of dots at the start is to force echo to echo. If the echo 
+# content is blank then it prints "ECHO is OFF" instead of nothing.
+#
+
 help:
-	@echo "JSX make file"
-	@echo "-------------"
-	@echo ""
-	@echo "JSX client = the standalone version of JSX you can use on the"
-	@echo "    command line."
-	@echo ""
-	@echo "JSX library = the library you can use inside another project for"
-	@echo "    compiling JSX code."
-	@echo ""
-	@echo "Commands"
-	@echo ""
-	@echo "    make build 			builds both the JSX client and library"
-	@echo "    make build-client		builds both the JSX client and library"
-	@echo "    make build-library 	builds both the JSX client and library"
-	@echo ""
-	@echo "    make clean			deletes the built versions of JSX"
-	@echo "    make clean-client		deletes just the built JSX client"
-	@echo "    make clean-library	deletes the build JSX library only"
-	@echo ""
-	@echo "    make help 			prints this help info"
+	@echo .
+	@echo .   JSX make file
+	@echo .   -------------
+	@echo .
+	@echo .   JSX client = the standalone version of JSX you can use on the
+	@echo .       command line.
+	@echo .   
+	@echo .   JSX library = the library you can use inside another project for
+	@echo .       compiling JSX code.
+	@echo .   
+	@echo .   Commands
+	@echo .   
+	@echo .       make build            builds both the JSX client and library
+	@echo .       make build-client     builds both the JSX client and library
+	@echo .       make build-library    builds both the JSX client and library
+	@echo .   
+	@echo .       make clean            deletes the built versions of JSX
+	@echo .       make clean-client     deletes just the built JSX client
+	@echo .       make clean-library    deletes the build JSX library only
+	@echo .   
+	@echo .       make help             prints this help info
+	@echo .
+	@echo .
+	@echo .
 
 all: build
 
-#build: build-client build-lib
+test:
+	@echo $(INSTALL_DIR)
+
+
 build: build-client
 build-library: dist/jsx.js
 build-client: dist/jsx-client.js dist/jsx.bat
 
+
+
+# 
+# 		Clean Project
+#
+
 clean: clean-client clean-library
 
 clean-client:
-	${DEL} .\dist\jsx-client.js >nul 2>&1
-	${DEL} .\dist\jsx.js        >nul 2>&1
-	${DEL} .\dist\jsx.bat       >nul 2>&1
+	${RM} .\dist\jsx-client.js                                      >nul 2>&1
+	${RM} .\dist\jsx.js                                             >nul 2>&1
+	${RM} .\dist\jsx.bat                                            >nul 2>&1
 
 clean-library:
-	${DEL} .\dist\jsx-library.js >nul 2>&1
+	${RM} .\dist\jsx-library.js                                     >nul 2>&1
 
-install:
-	copy /B .\dist\jsx-client.js .\bin\jsx-client.js
+
+
+# 
+# 		Install
+#
+
+install: install-client
+
+install-client: build-client uninstall-client
+	if not exist $(INSTALL_DIR) mkdir $(INSTALL_DIR)                >nul 2>&1
+	copy /B .\dist\jsx-client.js $(INSTALL_DIR)
+	copy /B .\dist\jsx.bat $(INSTALL_DIR)
+	echo %~dp0\jsx\jsx.bat %* > $(INSTALL_RUN_BAT)
+
+
+
+# 
+# 		Uninstall
+#
+
+uninstall: uninstall-client
+
+uninstall-client:
+	$(RM)    $(INSTALL_RUN_BAT)                                     >nul 2>&1
+	if exist $(INSTALL_DIR) $(RMDIR) $(INSTALL_DIR)                 >nul 2>&1
+
+
+
+# 
+# 		Building Specific Files
+#
 
 # specific file builds
 
