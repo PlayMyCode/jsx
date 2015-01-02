@@ -96,10 +96,10 @@ clean-library:
 install: install-client
 
 install-client: build-client uninstall-client
-	if not exist $(INSTALL_DIR) mkdir $(INSTALL_DIR)                >nul 2>&1
+	if not exist $(INSTALL_DIR) mkdir $(INSTALL_DIR)
 	copy /B .\dist\jsx-client.js $(INSTALL_DIR)
 	copy /B .\dist\jsx.bat $(INSTALL_DIR)
-	echo %~dp0\jsx\jsx.bat %* > $(INSTALL_RUN_BAT)
+	echo %%~dp0\jsx\jsx.bat %%* > $(INSTALL_RUN_BAT)
 
 
 
@@ -110,8 +110,8 @@ install-client: build-client uninstall-client
 uninstall: uninstall-client
 
 uninstall-client:
-	$(RM)    $(INSTALL_RUN_BAT)                                     >nul 2>&1
-	if exist $(INSTALL_DIR) $(RMDIR) $(INSTALL_DIR)                 >nul 2>&1
+	if exist $(INSTALL_RUN_BAT) $(RM) $(INSTALL_RUN_BAT)
+	if exist $(INSTALL_DIR) $(RMDIR) $(INSTALL_DIR)
 
 
 
