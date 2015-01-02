@@ -96,6 +96,7 @@
             },
 
             src: {
+                    isDefault   : true,
                     short       : 's',
                     takesValue  : true,
                     multipleValues: true
@@ -193,7 +194,7 @@
          * GATHER UP FILES
          */
 
-        var options = global.CommandLineOptions.parse( OPTIONS_SETUP, process.argv );
+        var options = global.CommandLineOptions.parse( OPTIONS_SETUP, process.argv, 2 );
         var params = options.params;
         var hasError = false;
         var log = new global.Logger();
@@ -207,9 +208,13 @@
         if ( params.help ) { 
             console.log();
             console.log( HELP_MESSAGE );
+
+            return;
         } else if ( params.version ) {
             console.log();
             console.log( VERSION_MESSAGE );
+
+            return;
         }
 
         
@@ -224,9 +229,9 @@
             return;
         }
 
-        var src     = params.src || [];
-        var folders = params.folder;
-        var out     = params.out;
+        var src       = params.src || [];
+        var folders   = params.folder;
+        var out       = params.out;
         var seenFiles = {};
 
         // -s / --src validation
@@ -433,7 +438,7 @@
             } else if ( IS_JSX_REGEX.test(file) ) {
                 log.debug( "\tcompile as JSX file" );
 
-                code += global.jsx.compile(
+                code += global.jsx.parse(
                         FS.readFileSync( file, 'utf8' ),
                         injects
                 );
