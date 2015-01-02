@@ -6,28 +6,18 @@
 (function() {
 
 
-    var startOption = function( currentOption, options, key, errors ) {
+    var startOption = function( currentOption, defaultOption, options, key, errors ) {
         var nextOption = options[key];
 
         if ( nextOption === undefined ) {
             errors.push( "unknown option given " + key );
 
-            return options['default'];
+            return defaultOption;
         } else {
-            // deal with the old result
-            if ( currentOption.longName !== 'default' && !currentOption.hasOwnProperty('result') ) {
-                if ( currentOption.value === false ) {
-                    currentOption.result = true;
-
-                } else {
-                    errors.push( "value missing for option '" + currentOption.longName + "'" );
-                }
-
-                if ( currentOption.hasOwnProperty('default') ) {
-                    currentOption.result = currentOption['default'];
-                }
-            }
-
+            endOption( currentOption, errors );
+            
+            // This can hit if nextOption is used multiple times
+            // or if the current and next were the same (but only takes 1 value).
             if ( nextOption.hasOwnProperty('result') ) {
                 errors.push( "duplicate option seen" );
             }
@@ -36,17 +26,32 @@
         }
     }
 
+    var endOption = function( currentOption, errors ) {
+        // deal with the old result
+        if ( currentOption !== null && currentOption['isDefault'] !== true && !currentOption.hasOwnProperty('result') ) {
+            if ( currentOption.value === false ) {
+                currentOption.result = true;
+            } else {
+                errors.push( "value missing for option '" + currentOption.longName + "'" );
+            }
+
+            if ( currentOption.hasOwnProperty('defaultValue') ) {
+                currentOption.result = currentOption['defaultValue'];
+            }
+        }
+    }
+
     var addToOption = function( currentOption, defaultOption, val, errors ) {
+        if ( currentOption === null ) {
+            errors.push( "unknown option given " + val );
 
         // foo.js,bar.js,foobar.js
-        if ( val.indexOf(',') !== -1 ) {
+        } else if ( val.indexOf(',') !== -1 ) {
             var valParts = val.split( ',' );
             
             for ( var i = 0; i < valParts.length; i++ ) {
                 currentOption = addToOption( currentOption, defaultOption, valParts[i], errors );
             }
-
-            return currentOption;
 
         // foo.js
         } else {
@@ -65,17 +70,17 @@
                     currentOption.result = val;
                 }
 
-                return defaultOption;
+                currentOption = defaultOption;
             } else {
                 if ( ! currentOption.hasOwnProperty('result') ) {
                     currentOption.result = [ val ];
                 } else {
                     currentOption.result.push( val );
                 }
-
-                return currentOption;
             }
         }
+
+        return currentOption;
     }
 
     /**
@@ -112,7 +117,7 @@
      * @param str The string to test.
      * @return True if the given string is in the form '--option'
      */
-    var isOption = function( str ) {
+    var isLongOption = function( str ) {
         return str.length > 2 && 
                str.charAt(0) === '-' && 
                str.charAt(0) === '-'
@@ -140,6 +145,8 @@
     var parseOptions = function( setup, arr, startI ) {
         var shortOptions   = {},
             longOptions    = {},
+            defaultOption  = undefined,
+            currentOption  = undefined,
             errors         = [];
 
         for ( var k in setup ) {
@@ -150,11 +157,20 @@
                         longName        : ensureHyphens(k, 2),
                         check           : option.check          || null,
                         value           : option.takesValue     || false,
-                        multipleValues  : option.multipleValues || false
+                        multipleValues  : option.multipleValues || false,
+                        isDefault       : !! option.isDefault   || false
                 }
 
-                if ( option.hasOwnProperty('default') ) {
-                    clone['default'] = option['default'];
+                if ( option.hasOwnProperty('isDefault') && option.isDefault === true ) {
+                    if ( defaultOption ) {
+                        throw new Error( 'more than 1 command line option marked as a default parameter' );
+                    }
+
+                    defaultOption = clone;
+                }
+
+                if ( option.hasOwnProperty('defaultValue') ) {
+                    clone['defaultValue'] = option['defaultValue'];
                 }
 
                 if ( option.hasOwnProperty('short') ) {
@@ -166,19 +182,9 @@
             }
         }
 
-        var defaultOption = {
-                check           : null,
-                name            : 'default',
-                short           : 'default',
-                longName        : 'default',
-                takesVal        : true,
-                multipleValues  : true
-        };
+        var currentOption = defaultOption || null ;
 
-        var currentOption = defaultOption;
 
-         longOptions[ 'default' ]  = defaultOption;
-        shortOptions[ 'default' ] = defaultOption;
 
         // Set to process args if array not supplied.
         // Params at 0 and 1 are 'node' and the name of the script. So skip
@@ -206,9 +212,7 @@
 
             // --option
             if ( key.charAt(0) === '-' ) {
-                var optionsGroup = isOption(key) ?
-                        longOptions  :
-                        shortOptions ;
+                var optionsGroup = isLongOption( key ) ? longOptions : shortOptions ;
 
                 // --option=value
                 //  -o=value
@@ -218,10 +222,10 @@
                     var val = key.substring( equalI+1 );
                     key = key.substring( 0, equalI );
 
-                    currentOption = startOption( currentOption, optionsGroup, key, errors );
+                    currentOption = startOption( currentOption, defaultOption, optionsGroup, key, errors );
                     currentOption = addToOption( currentOption, defaultOption, val, errors );
                 } else {
-                    currentOption = startOption( currentOption, optionsGroup, key, errors );
+                    currentOption = startOption( currentOption, defaultOption, optionsGroup, key, errors );
                 }
 
             // it is not an option, so just add it to our current one
@@ -230,7 +234,9 @@
             }
         }
 
+        endOption( currentOption, errors );
         
+
         
         // finally compile the results into a pretty object to return
         var results = {};
