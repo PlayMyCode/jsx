@@ -97,7 +97,9 @@
 
         var lines = code.split(/\n\r|\r\n|\n|\r/);
 
-        var isMarkdown      = true,
+        // Flags to tell which mode we are currently in.
+        // By 'mode' I mean are we a string? a list? a comment? markdown comment?.
+        var isMarkdown      = false,
             commentStarted  = false,
             isExample       = false,
             seenExample     = false,
