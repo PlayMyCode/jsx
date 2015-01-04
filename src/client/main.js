@@ -432,8 +432,18 @@
 
             if ( IS_JS_REGEX.test(file) ) {
                 log.debug( "\tconcat as JS file" );
+                var jsCode = FS.readFileSync( file, 'utf8' );
 
-                code += FS.readFileSync( file, 'utf8' );
+                // Use \n, always. No \r's.
+                if ( jsCode.indexOf("\r") !== -1 ) {
+                    if ( jsCode.indexOf("\n") === -1 ) {
+                        jsCode = jsCode.replace( /\r/g, "\n" );
+                    } else {
+                        jsCode = jsCode.replace( /\r/g, "" );
+                    }
+                }
+
+                code += jsCode;
 
             } else if ( IS_JSX_REGEX.test(file) ) {
                 log.debug( "\tcompile as JSX file" );
@@ -446,12 +456,10 @@
             }
         }
 
-
-
         // finally, write it all to disk
         log.debug();
         log.debug( 'write to output,', out );
-        FS.writeFileSync( out, code );
+        FS.writeFileSync( out, code, { encoding: 'utf-8' } );
         log.debug();
         log.debug( '# # # FINISHED # # #' );
         log.debug();

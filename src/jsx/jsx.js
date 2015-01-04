@@ -95,7 +95,9 @@
             injectedCode = parseInjectedVariables( injectedVariables );
         }
 
-        var lines = code.split(/\n\r|\r\n|\n|\r/);
+        var lines = ( code.indexOf("\n") !== -1 ) ?
+                code.replace( /\r/g, "" ).split( "\n" ) :
+                code.split( "\r" ) ;
 
         // Flags to tell which mode we are currently in.
         // By 'mode' I mean are we a string? a list? a comment? markdown comment?.
