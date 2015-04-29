@@ -61,7 +61,7 @@ help:
 	@echo .
 	@echo .
 
-all: build
+all: clean build install
 
 test:
 	@echo $(INSTALL_DIR)

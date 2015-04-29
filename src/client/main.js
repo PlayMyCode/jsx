@@ -413,25 +413,25 @@
          */
 
         if ( params.verbose ) {
-            log.debug( "compiling ..." );
+            log.debug( "JSX plan's to work on the files ..." );
 
             for ( var i = 0; i < allFiles.length; i++ ) {
-                log.debug( "\t" + allFiles[i] );
+                log.debug( "           " + allFiles[i] );
             }
 
             log.debug();
         }
 
 
+        log.debug( "Actually compiling now ..." );
 
         var code = '';
         for ( var i = 0; i < allFiles.length; i++ ) {
             var file = allFiles[i];
 
-            log.debug( ":", file );
-
             if ( IS_JS_REGEX.test(file) ) {
-                log.debug( "\tconcat as JS file" );
+                log.debug( " - as JS  ", file );
+
                 var jsCode = FS.readFileSync( file, 'utf8' );
 
                 // Use \n, always. No \r's.
@@ -446,19 +446,22 @@
                 code += jsCode;
 
             } else if ( IS_JSX_REGEX.test(file) ) {
-                log.debug( "\tcompile as JSX file" );
+                log.debug( " - as JSX ", file );
 
                 code += global.jsx.parse(
                         FS.readFileSync( file, 'utf8' ),
                         injects
                 );
 
+            } else {
+                log.debug( "-- File Ignored --", file );
             }
         }
 
         // finally, write it all to disk
         log.debug();
-        log.debug( 'write to output,', out );
+        log.debug( 'Write to output ...' )
+        log.debug( '           ' + out );
         FS.writeFileSync( out, code, { encoding: 'utf-8' } );
         log.debug();
         log.debug( '# # # FINISHED # # #' );
